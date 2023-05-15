@@ -30,9 +30,7 @@ class User {
                   password,
                   first_name,
                   last_name,
-                  phone,
-                  join_at,
-                  last_login_at`,
+                  phone`,
       [username, hashedPassword, first_name, last_name, phone]
     );
 
@@ -91,18 +89,17 @@ class User {
 
   static async get(username) {
     const result = await db.query(
-      `SELECT (username,
+      `SELECT username,
                first_name,
                last_name,
                phone,
                join_at,
-               last_login_at)
+               last_login_at
         FROM users
         WHERE username = $1`,
       [username]
     );
     const user = result.rows[0];
-    console.log("user= ", user);
 
     if (!user) throw new NotFoundError(`No such user: ${username}`);
 
@@ -170,7 +167,7 @@ class User {
               u.last_name,
               u.phone
         FROM messages AS m
-              JOIN users AS u ON m.to_username = u.username
+              JOIN users AS u ON m.from_username = u.username
         WHERE to_username = $1`,
       [username]
     );
