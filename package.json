@@ -20,5 +20,6 @@
     "supertest": "*"
   },
   "keywords": [],
+  "devDependencies": {},
   "description": ""
 }
