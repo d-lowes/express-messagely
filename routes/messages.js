@@ -3,6 +3,14 @@
 const Router = require("express").Router;
 const router = new Router();
 
+/*
+any logged-in user can see the list of users
+only that user can view their get-user-detail route, or their from-messages or to-messages routes.
+only the sender or recipient of a message can view the message-detail route
+only the recipient of a message can mark it as read
+any logged in user can send a message to any other user
+*/
+
 /** GET /:id - get detail of message.
  *
  * => {message: {id,
