@@ -7,18 +7,21 @@ const { SECRET_KEY } = require("../config");
 const User = require("../models/user");
 const { BadRequestError, UnauthorizedError } = require("../expressError");
 
+//TODO: guard statement at the top of functions and check if req.body is undefined
+
 /** POST /login: {username, password} => {token} */
 router.post("/login", async function (req, res, next) {
-    const { username, password } = req.body;
+  if (req.body === undefined) {
+    throw new BadRequestError('Invalid inputs');
+  }
+  const { username, password } = req.body;
 
-    if (!username || !password) throw new BadRequestError('Invalid inputs');
-
-    if (await User.authenticate(username, password) === true) {
-      let token = jwt.sign({ username }, SECRET_KEY);
-      return res.json({ token });
-    } else {
-      throw new UnauthorizedError("Could not authenticate user.");
-    }
+  if (await User.authenticate(username, password) === true) {
+    let token = jwt.sign({ username }, SECRET_KEY);
+    return res.json({ token });
+  } else {
+    throw new UnauthorizedError("Could not authenticate user.");
+  }
 });
 
 /** POST /register: registers, logs in, and returns token.
@@ -26,13 +29,12 @@ router.post("/login", async function (req, res, next) {
  * {username, password, first_name, last_name, phone} => {token}.
  */
 router.post("/register", async function (req, res, next) {
-  const { username, password, first_name, last_name, phone } = req.body;
-  console.log("req.body =", req.body);
-  if (!req.body) throw new BadRequestError('Invalid inputs');
+  if (req.body === undefined) {
+    throw new BadRequestError('Invalid inputs');
+  }
+  const { username, password, first_name, last_name, phone } = req.body;;
 
   await User.register({username, password, first_name, last_name, phone});
-
-  console.log("username =", username);
 
   let token = jwt.sign({ username }, SECRET_KEY);
   return res.json({ token });

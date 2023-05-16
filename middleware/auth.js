@@ -3,7 +3,7 @@
 /** Middleware for handling req authorization for routes. */
 
 const jwt = require("jsonwebtoken");
-
+const Message = require("../models/message");
 const { SECRET_KEY } = require("../config");
 const { UnauthorizedError } = require("../expressError");
 
@@ -24,7 +24,7 @@ function authenticateJWT(req, res, next) {
 /** Middleware: Requires user is authenticated. */
 
 function ensureLoggedIn(req, res, next) {
-  console.log("res.locals.user", res.locals.user);
+  console.log("res.locals.user =", res.locals.user);
   if (!res.locals.user) throw new UnauthorizedError();
 
   return next();
@@ -33,8 +33,8 @@ function ensureLoggedIn(req, res, next) {
 /** Middleware: Requires user is user for route. */
 
 function ensureCorrectUser(req, res, next) {
+  console.log("res.locals.user =", res.locals.user);
   const currentUser = res.locals.user;
-  console.log("currentUser= ", currentUser);
   const hasUnauthorizedUsername = currentUser?.username !== req.params.username;
 
   if (!currentUser || hasUnauthorizedUsername) {
@@ -44,8 +44,41 @@ function ensureCorrectUser(req, res, next) {
   return next();
 }
 
+/** Middleware: Makes sure that the currently-logged-in users is either the to
+ *  or from user. */
+
+async function ensureCorrectToandFromUser(req, res, next) {
+  console.log("res.locals.user =", res.locals.user);
+  const currentUser = res.locals.user;
+
+  const message = await Message.get(req.params.id);
+
+  if (currentUser.username === message.to_user.username ||
+    currentUser.username === message.from_user.username) {
+    return next();
+  }
+  throw new UnauthorizedError("Unauthorized access.");
+}
+
+/** Middleware: Makes sure that the only the intended recipient can mark as
+ *  read. */
+
+async function ensureCorrectRecipient(req, res, next) {
+  console.log("res.locals.user =", res.locals.user);
+  const currentUser = res.locals.user;
+
+  const message = await Message.get(req.params.id);
+
+  if (currentUser.username === message.to_user.username) {
+    return next();
+  }
+  throw new UnauthorizedError("Unauthorized access.");
+}
+
 module.exports = {
   authenticateJWT,
   ensureLoggedIn,
   ensureCorrectUser,
+  ensureCorrectToandFromUser,
+  ensureCorrectRecipient
 };
