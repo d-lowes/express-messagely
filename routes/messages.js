@@ -3,10 +3,12 @@
 const Router = require("express").Router;
 const router = new Router();
 const { UnauthorizedError } = require("../expressError");
-const { authenticateJWT,
-        ensureLoggedIn,
-        ensureCorrectUser } = require("../middleware/auth");
-const message = require("../models/message");
+const {
+  authenticateJWT,
+  ensureLoggedIn,
+  ensureCorrectUser,
+} = require("../middleware/auth");
+const Message = require("../models/message");
 
 /*
 any logged-in user can see the list of users
@@ -28,11 +30,14 @@ any logged in user can send a message to any other user
  * Makes sure that the currently-logged-in users is either the to or from user.
  *
  **/
-router.get("/:id", ensureCorrectUser, async function (req, res, next) {
-  const message = await Message.get(req.param.id);
-  if (res.locals.user.username === message.to_username ||
-    res.locals.user.username === message.from_username) {
-    return res.json ({ message });
+router.get("/:id", ensureLoggedIn, async function (req, res, next) {
+  const message = await Message.get(req.params.id);
+  console.log("message= ", message);
+  if (
+    res.locals.user.username === message.to_user.username ||
+    res.locals.user.username === message.from_user.username
+  ) {
+    return res.json({ message });
   } else {
     throw new UnauthorizedError("Unauthorized access.");
   }
@@ -45,9 +50,12 @@ router.get("/:id", ensureCorrectUser, async function (req, res, next) {
  *
  **/
 router.post("/", ensureLoggedIn, async function (req, res, next) {
-  const { from_username, to_username, body } = req.body;
-  const message = await Message.create(from_username, to_username, body);
-  return res.json ({ message });
+  const { to_username, body } = req.body;
+  const from_username = res.locals.user.username;
+  console.log("from_username= ", from_username);
+  const message = await Message.create({ from_username, to_username, body });
+  console.log("message= ", message);
+  return res.json({ message });
 });
 
 /** POST/:id/read - mark message as read:
@@ -57,11 +65,12 @@ router.post("/", ensureLoggedIn, async function (req, res, next) {
  * Makes sure that the only the intended recipient can mark as read.
  *
  **/
-router.post("/:id/read", ensureCorrectUser, async function (req, res, next) {
-  const message = await Message.get(req.param.id);
-  if (res.locals.user.username === message.to_username) {
-    await message.markRead(req.param.id);
-    return res.json ({ message });
+router.post("/:id/read", ensureLoggedIn, async function (req, res, next) {
+  const message = await Message.get(req.params.id);
+  if (res.locals.user.username === message.to_user.username) {
+    await Message.markRead(req.params.id);
+    console.log("message= ", message);
+    return res.json({ message });
   } else {
     throw new UnauthorizedError("Unauthorized access.");
   }
