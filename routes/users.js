@@ -5,7 +5,7 @@ const router = new Router();
 const { authenticateJWT,
         ensureLoggedIn,
         ensureCorrectUser } = require("../middleware/auth");
-const user = require("../models/user");
+const User = require("../models/user");
 /*
 any logged-in user can see the list of users
 only that user can view their get-user-detail route, or their from-messages or to-messages routes.
